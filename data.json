@@ -1,0 +1,17 @@
+{
+	"DISCORD_TOKEN":"",
+	"CHANNEL":"discord-plays",
+
+	"KEY_CODES":
+	{
+		"up":"w",
+		"down":"s",
+		"left":"a",
+		"right":"d",
+		"a":"j",
+		"b":"k",
+		"start":"h",
+		"select":"f"
+	}
+
+}

@@ -1,17 +1,18 @@
 import os, discord, json
 from input_handler import *
 
-if not os.path.exists('data.json'):
-    print("Missing data.json file. Terminating")
-    quit()
-    
-file = open('data.json')
-data = json.load(file)
-file.close()
-
-TOKEN = data['DISCORD_TOKEN']
-CHANNEL = data['CHANNEL']
-KEYS = data['KEY_CODES']
+try:
+    file = open('data.json')
+    data = json.load(file)
+    file.close()
+    TOKEN = data['DISCORD_TOKEN']
+    CHANNEL = data['CHANNEL']
+    KEYS = data['KEY_CODES']
+except FileNotFoundError:
+    print("Error: data.json file not found")
+    exit(1)
+except JSONDecodeError:
+    print("Error: data is invalid")
 
 handler = init_thread()
 client = discord.Client()
@@ -34,3 +35,4 @@ async def on_message(message):
 
 print("Press CTRL + Pause/Break to quit the program")
 client.run(TOKEN)
+handler.join()

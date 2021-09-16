@@ -22,7 +22,6 @@ client = discord.Client()
 async def on_ready():
 	print(f'{client.user} has connected to Discord!')
 
-#todo: map messages to key presses and send to queue, 2nd thread to actually activate buttons?
 @client.event
 async def on_message(message):
     if(message.author != client.user and message.channel.name == CHANNEL):

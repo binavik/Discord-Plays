@@ -1,4 +1,5 @@
-import os, discord, json, queue, time, threading
+import os, json, queue, time, threading
+from discord.ext import commands
 from pynput.keyboard import Key, Controller
 
 try:
@@ -16,16 +17,15 @@ except FileNotFoundError:
 except JSONDecodeError:
     print("Error: data is invalid")
 
-client = discord.Client()
+bot = commands.Bot(command_prefix="!")
 
-@client.event
+@bot.event
 async def on_ready():
-	print(f'{client.user} has connected to Discord!')
+	print(f'{bot.user} has connected to Discord!')
 
-#todo: map messages to key presses and send to queue, 2nd thread to actually activate buttons?
-@client.event
+@bot.event
 async def on_message(message):
-    if(message.author != client.user and message.channel.name == CHANNEL):
+    if(message.author != bot.user and message.channel.name == CHANNEL):
         if(message.content == "!help"):
             string = "Type any of the following words to press that button in game\n"
             for key in KEYS:
@@ -33,6 +33,7 @@ async def on_message(message):
             await message.channel.send(string)
         elif(str.lower(message.content) in KEYS):
             input_queue.put(KEYS[str.lower(message.content)])
+    await bot.process_commands(message)
 
 def press(key):
     keyboard.press(key)
@@ -40,14 +41,29 @@ def press(key):
     keyboard.release(key)
     time.sleep(0.0001)
     
-def handle_inputs():
-    while True:
-        if not input_queue.empty():
-            press(input_queue.get())
+def handle_inputs(in_queue, run_flag):
+    while run_flag.is_set():
+        try:
+            key = in_queue.get()
+            keyboard.press(key)
+            time.sleep(0.1)
+            keyboard.release(key)
+            time.sleep(0.0001)
+        except:
+            pass            
             
-input_handler_thread = threading.Thread(target=handle_inputs)
+@bot.command()
+@commands.is_owner()
+async def shutdown(context):
+    await context.send("shutting down")
+    run_flag.clear()
+    input_handler_thread.join()
+    await bot.close()
+
+run_flag = threading.Event()
+run_flag.set()
+input_handler_thread = threading.Thread(target=handle_inputs, args=[input_queue, run_flag])
 input_handler_thread.start()
 
 print("Press CTRL + Pause/Break to quit the program")
-client.run(TOKEN)
-handler.join()
+bot.run(TOKEN)

@@ -17,11 +17,18 @@ except FileNotFoundError:
 except JSONDecodeError:
     print("Error: data is invalid")
 
+run_flag = threading.Event()
+run_flag.set()
+paused = False
+
 bot = commands.Bot(command_prefix="!")
 
 @bot.event
 async def on_ready():
-	print(f'{bot.user} has connected to Discord!')
+    print(f'{bot.user} has connected to Discord!')
+    print("Type !pause to halt input handling.")
+    print("Type !resume to resume input handling.")
+    
 
 @bot.event
 async def on_message(message):
@@ -31,8 +38,11 @@ async def on_message(message):
             for key in KEYS:
                 string = string + key + '\n'
             await message.channel.send(string)
-        elif(str.lower(message.content) in KEYS):
-            input_queue.put(KEYS[str.lower(message.content)])
+        elif not paused:
+            try:
+                input_queue.put(KEYS[str.lower(message.content)])
+            except:
+                pass
     await bot.process_commands(message)
 
 def press(key):
@@ -56,12 +66,25 @@ def handle_inputs(in_queue, run_flag):
 @commands.is_owner()
 async def shutdown(context):
     await context.send("shutting down")
+    global run_flag, input_handler_thread, bot
     run_flag.clear()
     input_handler_thread.join()
-    await bot.close()
+    await bot.logout()
 
-run_flag = threading.Event()
-run_flag.set()
+@bot.command()
+@commands.is_owner()
+async def pause(context):
+    global paused
+    paused = True
+    await context.send("Inputs are now paused, please type !resume to continue.")
+
+@bot.command()
+@commands.is_owner()
+async def resume(context):
+    global paused
+    paused = False
+    await context.send("You may now resume playing.")
+
 input_handler_thread = threading.Thread(target=handle_inputs, args=[input_queue, run_flag])
 input_handler_thread.start()
 

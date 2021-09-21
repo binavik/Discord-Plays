@@ -9,6 +9,7 @@ try:
     TOKEN = data['DISCORD_TOKEN']
     CHANNEL = data['CHANNEL']
     KEYS = data['KEY_CODES']
+    BANNED_USERS = data['BANNED_USERS']
     input_queue = queue.Queue()
     keyboard = Controller()
 except FileNotFoundError:
@@ -38,6 +39,8 @@ async def on_message(message):
             for key in KEYS:
                 string = string + key + '\n'
             await message.channel.send(string)
+        elif message.author.name in BANNED_USERS:
+            await message.delete()
         elif not paused:
             try:
                 input_queue.put(KEYS[str.lower(message.content)])
